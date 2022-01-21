@@ -41,10 +41,10 @@ server.listen(8080);
 ## Routers
 
 ```ts
-import { Server, Router } from 'mod.ts';
+import { Server } from 'mod.ts';
 
 const server = new Server();
-const users = new Router('/users');
+const users = new Server.Router('/users');
 
 users.on('/:id', 'GET')(({ params, respond }) => {
   respond({ body: localStorage.getItem(params.id) });

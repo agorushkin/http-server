@@ -1,6 +1,7 @@
+import { HTTPRequest } from './event/event.ts';
+
 import { Middleware, Handler } from './middleware.ts';
 import { Router } from './router.ts';
-import { HTTPRequest } from './event/event.ts';
 
 import Constants from './constants.json' assert { type: 'json' };
 
@@ -11,6 +12,8 @@ export class Server {
   #listeners = new Array<Middleware>();
   #server: Deno.Listener | null = null
 
+  static Router = Router;
+
   /**
    * Launch the server.
    * 
@@ -20,26 +23,28 @@ export class Server {
    * server.listen(8080);
   */
   async listen(port = 8080): Promise<void> {
+    // Start listening for requests.
     this.#server = Deno.listen({ port });
 
-    try {
-      for await (const conn of this.#server) (async () => {
-        for await (const { request, respondWith } of Deno.serveHttp(conn)) {
-          let responded = false;
+    // Listens for TCP connections.
+    for await (const conn of this.#server) (async () => {
+      // Turns TCP conenctions into HTTP requests, and handles them.
+      for await (const { request, respondWith } of Deno.serveHttp(conn)) {
+        let responded = false;
 
-          this.#run(request, (response: Response) => {
-            if (responded) return null;
+        // Runs the function to handle the request, and call all the handlers.
+        this.#run(request, (response: Response) => {
+          if (responded) return null;
 
-            respondWith(response);
-            responded = true;
-          });
-        }
-      })();
-    } catch {/* Do nothing */}
+          respondWith(response);
+          responded = true;
+        });
+      }
+    })();
   }
 
   #run(request: Request, respond: (resonse: Response) => void) {
-    const httpRequest = new HTTPRequest(request, respond);
+    const workedRequest = new HTTPRequest(request, respond);
     const handlers = [...this.#middleware, ...this.#listeners];
     const handled = new Set<number>();
 
@@ -48,14 +53,17 @@ export class Server {
 
       return async () => {
         const handler = handlers[index + 1]
+        // Checks if the handler has already been called.
         if (!handled.has(index))
-          await handler(httpRequest, next(index + 1));
+          // Runs handler.
+          await handler(workedRequest, next(index + 1));
 
           handled.add(index);
         next(index + 1)();
       }
     }
 
+    // Executes the next function to start the chain of middleware.
     next()();
   }
 
@@ -134,19 +142,28 @@ export class Server {
     this.use(route, 'GET')(async ({ href, respond }) => {
       const pathname = new URL(href).pathname;
 
+      // Get a clear path that can be easily parsed.
       const base = route.split('/').filter((item) => item != '*' && item != '');
+      // Get a part of path that is used as a part of the route.
       const rest = pathname.replace(/^\//, '').split('/').filter((_, index) => index >= base.length);
+      // Create a path to the file.
       const path = `file://${[Deno.cwd(), root, ...rest].join('/')}`;
 
-      const contentType = (CONTENT_TYPES as Record<string, string>)[path.split('/').at(-1)?.split('.').at(-1) ?? ''] ?? 'text/plain'
+      // Extension of the file being requested.
+      const extension = path.split(/\//).pop()?.split('.').pop() ?? '.txt';
+      // Content type of the file being requested.
+      const contentType = (CONTENT_TYPES as Record<string, string>)[extension] ?? 'text/plain';
 
+      // Fetches the file located at the path.
       await fetch(path)
         .then(async (file) => {
+          // Responds with file buffer and content type.
           respond({
             body: await file.arrayBuffer(),
             headers: { 'content-type': contentType },
           });
         })
+        // Responds with a 404 if the file doesn't exist.
         .catch(() => respond({ status: 404 }));
     });
 

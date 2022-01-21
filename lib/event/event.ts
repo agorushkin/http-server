@@ -1,17 +1,22 @@
 import { HTTPBody } from './body.ts';
 
+/**
+ * This class represents an HTTP response.
+ */
 interface HTTPResponse {
   body?: null | string | ArrayBufferLike | FormData;
   status?: number;
   headers?: Record<string, string>;
 }
 
+/**
+ * This class represents an HTTP request.
+*/
 export class HTTPRequest {
   #route = '/*';
 
   href: string;
   params: Record<string, string>;
-
   headers: Record<string, string>;
   method: string;
   body: HTTPBody;
@@ -32,42 +37,47 @@ export class HTTPRequest {
   /**
    * Upgrade the request to a websocket connection.
    * 
-   * @returns A WebSocket if the upgrade was successful, otherwise null.
+   * @returns A WebSocket if the request was upgraded, otherwise null.
   */
    upgrade: () => WebSocket | null;
 
   constructor(request: Request, respond: (res: Response) => void) {
-    this.href = request.url;
-    this.params = {};
+    this.href    = request.url;
+    this.params  = {};
 
     this.headers = Object.fromEntries(request.headers.entries());
-    this.method = request.method;
-    this.body = new HTTPBody(request), 
+    this.method  = request.method;
+    this.body    = new HTTPBody(request), 
 
     this.respond = (response: HTTPResponse = { body: null, status: 200, headers: {} }) => {
       const { body, status, headers } = response;
 
-      body instanceof Response
-        ? respond(body)
-        : respond(new Response(body as null, { status, headers }));
+      // Make a response object to respond with.
+      const rawResponse = body instanceof Response
+        ? body
+        : new Response(body as null, { status, headers });
+
+      respond(rawResponse);
     };
 
     this.upgrade = () => {
-      const
-        href = this.href,
-        headers = this.headers,
-        respond = this.respond;
+      const { href, headers, respond } = this;
 
+      // Make sure the request wants to upgrade to a websocket.
       if (headers.upgrade != 'websocket') return null;
 
+      // Make an instance of request.
       const request = new Request(href, headers);
+
       try {
         const { socket, response } = Deno.upgradeWebSocket(request);
 
+        // Responds with the response to upgrade to a websocket.
         respond({ body: response as unknown as null });
         return socket;
       } catch {
-        respond({ status: 405 });
+        // Responds with bad request status as the upgrade failed.
+        respond({ status: 400 });
         return null;
       }
     }
@@ -78,9 +88,14 @@ export class HTTPRequest {
   }
 
   set route(value) {
+    // Make the route always use same deviders and remove multiple deviders at one spot.
     this.#route = value.replace(/(\/+|\\+)/g, '/');
 
+    // Make a pattern to later parse the parameters with.
     const routePattern = new URLPattern({ pathname: this.#route });
-    this.params = routePattern.exec(this.href)?.pathname.groups ?? {};
+    // Parse the route to get the parameters.
+    const routeParams  = routePattern.exec(this.href)?.pathname.groups;
+
+    this.params = routeParams ?? {};
   }
 }

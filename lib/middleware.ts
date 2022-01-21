@@ -1,16 +1,19 @@
 import { HTTPRequest } from './event/event.ts';
 
-export type Handler = (event: HTTPRequest, next: () => void) => void | Promise<void>;
+export type Handler = (request: HTTPRequest, next: () => void) => void | Promise<void>;
 export type Middleware = ReturnType<typeof Middleware>;
 export function Middleware(method: string, route: string, handler: Handler) {
-  return async function (event: HTTPRequest, next: () => void) {
-    event.route = route;
+  return async function (request: HTTPRequest, next: () => void) {
+    request.route = route;
 
-    const isPatternPassed = new URLPattern({ pathname: event.route }).test(event.href);
-    const isMethodPassed = method == event.method || method == 'ANY';
+    // Check if the request path matches the route.
+    const isPatternPassed = new URLPattern({ pathname: request.route }).test(request.href);
+    // Check if the request method matches the method.
+    const isMethodPassed = method == request.method || method == 'ANY';
 
+    // If the request path and method pass, calls the handler, else returns false.
     return isPatternPassed && isMethodPassed
-      ? (await handler(event, next), true)
+      ? (await handler(request, next), true)
       : false;
   };
 }
