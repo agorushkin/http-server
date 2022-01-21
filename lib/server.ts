@@ -3,9 +3,7 @@ import { HTTPRequest } from './event/event.ts';
 import { Middleware, Handler } from './middleware.ts';
 import { Router } from './router.ts';
 
-import Constants from './constants.json' assert { type: 'json' };
-
-const { CONTENT_TYPES } = Constants;
+import { CONTENT_TYPES } from './constants.ts';
 
 export class Server {
   #middleware = new Array<Middleware>();
