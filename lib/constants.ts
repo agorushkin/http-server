@@ -120,4 +120,4 @@ export const CONTENT_TYPES = {
   'srt': 'application/x-subrip',
   'xml': 'application/xml',
   'zip': 'application/zip'
-}
+};
