@@ -67,7 +67,7 @@ export class HTTPRequest {
       if (headers.upgrade != 'websocket') return null;
 
       // Make an instance of request.
-      const request = new Request(href, headers);
+      const request = new Request(href, { headers });
 
       try {
         const { socket, response } = Deno.upgradeWebSocket(request);
