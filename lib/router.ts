@@ -1,7 +1,7 @@
 import { Middleware, Handler } from './middleware.ts';
 
 export class Router {
-  #handlers = new Set<Middleware>();
+  #handlers = new Set<Handler>();
   #base: string;
 
   /**
@@ -35,8 +35,10 @@ export class Router {
      * server.on('/', 'GET')(({ respond }) => respond('Hello World'));
     */
     return (...handlers: Handler[]) => {
-      route = `${this.#base}/${route}`;
-      handlers.forEach(handler => this.#handlers.add(Middleware(method, route, handler)));
+      route = `${ this.#base }/${ route }`;
+      for (const handler of handlers) {
+        this.#handlers.add(Middleware(method, route, handler))
+      }
 
       return this;
     };
@@ -47,7 +49,7 @@ export class Router {
    * 
    * @returns Router handlers.
    */
-  handlers(): Middleware[] {
+  handlers(): Handler[] {
     return [...this.#handlers];
   }
 }

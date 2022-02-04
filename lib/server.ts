@@ -115,11 +115,13 @@ export class Server {
      * server.use('/')(() => console.log('Request'));
      * server.use('/', 'ANY')(() => console.log('Request'));
     */
-    return (...handlers: Handler[] | Router[]): Server => {
-      handlers[0] instanceof Router
-        ? (handlers as Router[]).forEach(router => this.#middleware.push(...router.handlers()))
-        : (handlers as Handler[]).forEach(handler => this.#middleware.push(Middleware(method, route, handler)));
-
+    return (...handlers: (Handler | Router)[]): Server => {
+      for (const middleware of handlers) {
+        middleware instanceof Router
+          ? this.#middleware.push(...middleware.handlers())
+          : this.#middleware.push(Middleware(method, route, middleware)); 
+      }
+      
       return this;
     }
   }
@@ -145,7 +147,7 @@ export class Server {
       // Get a part of path that is used as a part of the route.
       const rest = pathname.replace(/^\//, '').split('/').filter((_, index) => index >= base.length);
       // Create a path to the file.
-      const path = `file://${[Deno.cwd(), root, ...rest].join('/')}`;
+      const path = `file://${ [ Deno.cwd(), root, ...rest ].join('/') }`;
 
       // Extension of the file being requested.
       const extension = path.split(/\//).pop()?.split('.').pop() ?? '.txt';
