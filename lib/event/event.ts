@@ -20,6 +20,7 @@ export class HTTPRequest {
   headers: Record<string, string>;
   method: string;
   body: HTTPBody;
+  ip: string;
 
   /**
    * Respond to the request.
@@ -32,22 +33,23 @@ export class HTTPRequest {
    * 
    * respond({ body: 'Hello World', status: 404, headers: {} });
   */
-  respond: (response: HTTPResponse) => void;
+  respond(response: HTTPResponse): void {}
 
   /**
    * Upgrade the request to a websocket connection.
    * 
    * @returns A WebSocket if the request was upgraded, otherwise null.
   */
-   upgrade: () => WebSocket | null;
+  upgrade(): WebSocket | null { return undefined as unknown as WebSocket | null };
 
-  constructor(request: Request, respond: (res: Response) => void) {
+  constructor(request: Request, ip: string, respond: (res: Response) => void) {
     this.href    = request.url;
     this.params  = {};
 
     this.headers = Object.fromEntries(request.headers.entries());
     this.method  = request.method;
     this.body    = new HTTPBody(request), 
+    this.ip      = ip;
 
     this.respond = (response: HTTPResponse = { body: null, status: 200, headers: {} }) => {
       const { body, status, headers } = response;

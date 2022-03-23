@@ -26,12 +26,15 @@ export class Server {
 
     // Listens for TCP connections.
     for await (const conn of this.#server) (async () => {
+      // Gets the IP of the client.
+      const ip = (conn.remoteAddr as { hostname: string }).hostname!;
+
       // Turns TCP conenctions into HTTP requests, and handles them.
       for await (const { request, respondWith } of Deno.serveHttp(conn)) {
         let responded = false;
 
         // Runs the function to handle the request, and call all the handlers.
-        this.#run(request, (response: Response) => {
+        this.#run(request, ip, (response: Response) => {
           if (responded) return null;
 
           respondWith(response);
@@ -41,8 +44,8 @@ export class Server {
     })();
   }
 
-  #run(request: Request, respond: (resonse: Response) => void) {
-    const workedRequest = new HTTPRequest(request, respond);
+  #run(request: Request, ip: string, respond: (resonse: Response) => void) {
+    const workedRequest = new HTTPRequest(request, ip, respond);
     const handlers = [...this.#middleware, ...this.#listeners];
     const handled = new Set<number>();
 
