@@ -8,7 +8,7 @@ import { CONTENT_TYPES } from './constants.ts';
 export class Server {
   #middleware = new Array<Middleware>();
   #listeners = new Array<Middleware>();
-  #server: Deno.Listener | null = null
+  #server: Deno.Listener | null = null;
 
   static Router = Router;
 
@@ -24,23 +24,33 @@ export class Server {
     // Start listening for requests.
     this.#server = Deno.listen({ port });
 
-    // Listens for TCP connections.
+      // Listens for TCP connections.
     for await (const conn of this.#server) (async () => {
       // Gets the IP of the client.
       const ip = (conn.remoteAddr as { hostname: string }).hostname!;
 
       // Turns TCP conenctions into HTTP requests, and handles them.
-      for await (const { request, respondWith } of Deno.serveHttp(conn)) {
-        let responded = false;
+      const httpRequest = Deno.serveHttp(conn);
 
-        // Runs the function to handle the request, and call all the handlers.
-        this.#run(request, ip, (response: Response) => {
-          if (responded) return null;
+      try {
+        while (true) {
+          const event = await httpRequest.nextRequest();
 
-          respondWith(response);
-          responded = true;
-        });
-      }
+          if (!event) break;
+
+          const { request, respondWith: respond } = event;
+
+          let responded = false;
+
+          // Runs the function to handle the request, and call all the handlers.
+          this.#run(request, ip, (response: Response) => {
+            if (responded) return null;
+
+            respond(response);
+            responded = true;
+          });
+        }
+      } catch (_) { /* Ignore */ }
     })();
   }
 
@@ -108,7 +118,7 @@ export class Server {
    * 
    * @returns A function that can later be used to add handlers.
    */
-  use(route = '/*', method = 'ANY'): (...handlers: Handler[]) => Server {
+  use(route = '/*', method = 'ANY'): (...handlers: Handler[] | Router[]) => Server {
     /**
      * A function to add handlers.
      * 
