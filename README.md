@@ -9,7 +9,7 @@ This is a small HTTP server library written with 💖 and TypeScript and is mean
 ## Server
 
 ```ts
-import { Server } from 'mod.ts';
+import { Server } from 'https://deno.land/x/http/mod.ts';
 
 const server = new Server();
 
@@ -23,7 +23,7 @@ server.listen(8080);
 ## Middleware
 
 ```ts
-import { Server } from 'mod.ts';
+import { Server } from 'https://deno.land/x/http/mod.ts';
 
 const server = new Server();
 
@@ -41,7 +41,7 @@ server.listen(8080);
 ## Routers
 
 ```ts
-import { Server } from 'mod.ts';
+import { Server } from 'https://deno.land/x/http/mod.ts';
 
 const server = new Server();
 const users = new Server.Router('/users');
@@ -65,7 +65,7 @@ server.listen(8080);
 ## Static Files
 
 ```ts
-import { Server } from 'mod.ts';
+import { Server } from 'https://deno.land/x/http/mod.ts';
 
 const server = new Server();
 
@@ -77,7 +77,7 @@ server.listen(8080);
 ## WebSockets
 
 ```ts
-import { Server } from 'mod.ts';
+import { Server } from 'https://deno.land/x/http/mod.ts';
 
 const server = new Server();
 
