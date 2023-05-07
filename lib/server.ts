@@ -3,7 +3,7 @@ import { listen } from './listen.ts';
 
 export type Handler = (request: HttpRequest) => void | Promise<void>;
 
-export class Server {
+export class HttpServer {
   private signal: AbortSignal | null = null;
   private handlers = new Array<Handler>();
 
