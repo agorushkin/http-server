@@ -7,7 +7,7 @@ export const file = async (path: string): Promise<HttpResponse> => {
   path = path.replace(/\/\.\//g, '/');
 
   const base = path[0] === '/' ? '' : Deno.cwd();
-  const file = await fetch(`file://${ base }/${ path }`).then(file => file.arrayBuffer()).catch(() => null);
+  const file = await fetch(`file://${ base }/${ path }`).then(file => file.body).catch(() => null);
   const type = MIME_TYPES.get(path.split('.').pop() ?? 'txt') ?? 'text/plain';
 
   return file

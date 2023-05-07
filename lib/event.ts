@@ -1,5 +1,5 @@
 export interface HttpResponse {
-  body?: null | string | ArrayBuffer | FormData;
+  body?: null | string | ArrayBuffer | FormData | ReadableStream<Uint8Array>;
   headers?: Record<string, string> | Headers;
   status?: number;
 }
