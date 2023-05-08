@@ -1,7 +1,7 @@
 import { HttpRequest } from './event.ts';
 import { listen } from './listen.ts';
 
-export type Handler = (request: HttpRequest) => void | Promise<void>;
+export type Handler = (request: HttpRequest) => unknown | Promise<unknown>;
 
 export class HttpServer {
   private signal: AbortSignal | null = null;
