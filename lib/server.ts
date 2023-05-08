@@ -4,26 +4,26 @@ import { listen } from './listen.ts';
 export type Handler = (request: HttpRequest) => unknown | Promise<unknown>;
 
 export class HttpServer {
-  private signal: AbortSignal | null = null;
-  private handlers = new Array<Handler>();
+  #signal: AbortSignal | null = null;
+  #handlers = new Array<Handler>();
 
   listen = (port: number, files?: { cert: string, key: string }) => {
-    this.signal = new AbortController().signal;
+    this.#signal = new AbortController().signal;
 
     listen(async (request, ip) => {
       let respond: (response: Response) => void;
       const response = new Promise(resolve => respond = resolve);
       const data     = new HttpRequest(request, ip, respond!);
 
-      this.handlers.map(handler => handler(data));
+      this.#handlers.map(handler => handler(data));
 
       return await response as Promise<Response>;
-    }, { port, files, signal: this.signal });
+    }, { port, files, signal: this.#signal });
   };
 
   close = () => {
-    this.signal?.dispatchEvent(new Event('abort'));
-    return this.signal?.aborted ?? false;
+    this.#signal?.dispatchEvent(new Event('abort'));
+    return this.#signal?.aborted ?? false;
   };
 
   plugin = (handler: Handler) => {
@@ -32,7 +32,7 @@ export class HttpServer {
       handler(request);
     };
 
-    this.handlers.unshift(wrapper);
+    this.#handlers.unshift(wrapper);
   };
 
   route = (path: string, method = 'GET') => {
@@ -50,7 +50,7 @@ export class HttpServer {
         }
       };
 
-      this.handlers.push(wrapper);
+      this.#handlers.push(wrapper);
     };
   };
 }
