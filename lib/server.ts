@@ -27,30 +27,31 @@ export class HttpServer {
   };
 
   plugin = (handler: Handler) => {
-    const wrapper = (request: HttpRequest) => {
+    const fn = (request: HttpRequest) => {
       request.params = {};
       handler(request);
     };
 
-    this.#handlers.unshift(wrapper);
+    this.#handlers.unshift(fn);
   };
 
-  route = (path: string, method = 'GET') => {
+  route = (route: string, method = 'GET') => {
     return (handler: Handler) => {
-      const wrapper = (request: HttpRequest) => {
-        const pattern = new URLPattern({ pathname: path });
+      const fn = (request: HttpRequest) => {
+        const pattern = new URLPattern({ pathname: route });
         const params  = pattern.exec(request.href)?.pathname.groups;
   
-        const isPatternPassed = new URLPattern({ pathname: path }).test(request.href);
+        const isPatternPassed = pattern.test(request.href);
         const isMethodPassed = method == request.method || method == 'ANY';
   
-        if (isPatternPassed && isMethodPassed) {
-          request.params = params ?? {};
-          handler(request);
-        }
+        if (!isPatternPassed || !isMethodPassed) return;
+
+        request.params = params ?? {};
+        request.route = route;
+        handler(request);
       };
 
-      this.#handlers.push(wrapper);
+      this.#handlers.push(fn);
     };
   };
 }

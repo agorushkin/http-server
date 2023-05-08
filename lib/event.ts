@@ -18,6 +18,7 @@ export class HttpRequest {
   readonly query: Readonly<Record<string, string>>;
   
   params: Record<string, string | undefined> = {};
+  route: string | null = null;
 
   constructor(request: Request, ip: string | null, respond: (res: Response) => void) {
     this.#request = request;
