@@ -10,12 +10,12 @@ export class HttpServer {
   listen = (port: number, files?: { cert: string, key: string }) => {
     this.#signal = new AbortController().signal;
 
-    listen(async (request, ip) => {
+    listen(async (raw, ip) => {
       let respond: (response: Response) => void;
       const response = new Promise(resolve => respond = resolve);
-      const data     = new HttpRequest(request, ip, respond!);
+      const request  = new HttpRequest(raw, ip, respond!);
 
-      this.#handlers.map(handler => handler(data));
+      for (const handler of this.#handlers) await handler(request);
 
       return await response as Promise<Response>;
     }, { port, files, signal: this.#signal });
@@ -27,9 +27,11 @@ export class HttpServer {
   };
 
   plugin = (handler: Handler) => {
-    const fn = (request: HttpRequest) => {
+    const fn = async (request: HttpRequest) => {
       request.params = {};
-      handler(request);
+      request.route = null;
+
+      await handler(request);
     };
 
     this.#handlers.unshift(fn);
@@ -37,7 +39,7 @@ export class HttpServer {
 
   route = (route: string, method = 'GET') => {
     return (handler: Handler) => {
-      const fn = (request: HttpRequest) => {
+      const fn = async (request: HttpRequest) => {
         const pattern = new URLPattern({ pathname: route });
         const params  = pattern.exec(request.href)?.pathname.groups;
   
@@ -48,7 +50,8 @@ export class HttpServer {
 
         request.params = params ?? {};
         request.route = route;
-        handler(request);
+
+        await handler(request);
       };
 
       this.#handlers.push(fn);
