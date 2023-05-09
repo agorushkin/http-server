@@ -15,14 +15,13 @@ export const file = async (path: string): Promise<HttpResponse> => {
     : { status: 404 };
 };
 
-export const files = (path: string, root: string): Handler => {
-  path = path.replace(/(?<!\\)\*.*/, '');
+export const files = (route: string, root: string): Handler => {
+  route = route.replace(/(?<!\\)\*.*/, '');
 
   return async ({ href, respond }) => {
     const pathname = new URL(href).pathname;
-
     
-    const base = path.split('/').filter((item) => item != '*' && item != '');
+    const base = route.split('/').filter((item) => item != '*' && item != '');
     const rest = pathname.replace(/^\//, '').split('/').filter((_, index) => index >= base.length);
 
     const source = `${ root.replace(/\/$/, '') }/${ [ ...rest ].join('/') }`;
