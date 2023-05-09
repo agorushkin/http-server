@@ -41,7 +41,7 @@ export const listen = async (handler: (request: Request, ip: string | null) => P
 
           respondWith(await handler(request, ip));
         }
-      })();
+      })().catch(() => {});
     } catch { continue }
   }
 }
