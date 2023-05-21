@@ -16,10 +16,13 @@ export const file = async (path: string): Promise<HttpResponse> => {
 };
 
 export const files = (route: string, root: string): Handler => {
-  route = route.replace(/(?<!\\)\*.*/, '');
+  route = route.replace(/\*?$/, '*');
 
   return async ({ href, respond }) => {
     const pathname = new URL(href).pathname;
+
+    const pattern = new URLPattern({ pathname: route });
+    if (!pattern.test(href)) return;
     
     const base = route.split('/').filter((item) => item != '*' && item != '');
     const rest = pathname.replace(/^\//, '').split('/').filter((_, index) => index >= base.length);
