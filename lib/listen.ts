@@ -39,7 +39,7 @@ export const listen = async (handler: (request: Request, ip: string | null) => P
             ? addr.hostname
             : null;
 
-          respondWith(await handler(request, ip));
+          respondWith(await handler(request, ip)).catch(() => {});
         }
       })().catch(() => {});
     } catch { continue }
