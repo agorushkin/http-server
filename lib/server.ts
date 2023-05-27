@@ -26,7 +26,7 @@ export class HttpServer {
     return this.#signal?.aborted ?? false;
   };
 
-  plugin = (handler: Handler) => {
+  use = (handler: Handler) => {
     const fn = async (request: HttpRequest) => {
       request.params = {};
       request.route = null;
