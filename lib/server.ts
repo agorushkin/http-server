@@ -27,19 +27,19 @@ export class HttpServer {
   };
 
   use = (handler: Handler) => {
-    const fn = async (request: HttpRequest) => {
+    const callback = async (request: HttpRequest) => {
       request.params = {};
       request.route = null;
 
       await handler(request);
     };
 
-    this.#handlers.unshift(fn);
+    this.#handlers.unshift(callback);
   };
 
   route = (route: string, method = 'GET') => {
     return (handler: Handler) => {
-      const fn = async (request: HttpRequest) => {
+      const callback = async (request: HttpRequest) => {
         const pattern = new URLPattern({ pathname: route });
         const params  = pattern.exec(request.href)?.pathname.groups;
   
@@ -54,7 +54,7 @@ export class HttpServer {
         await handler(request);
       };
 
-      this.#handlers.push(fn);
+      this.#handlers.push(callback);
     };
   };
 }
