@@ -1,5 +1,5 @@
 export interface HttpResponse {
-  body?: null | string | ArrayBuffer | FormData | ReadableStream<Uint8Array>;
+  body?: null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
   headers?: Record<string, string> | Headers;
   status?: number;
 }
@@ -34,22 +34,24 @@ export class HttpRequest {
     this.query    = [ ...new URL(request.url).searchParams.entries() ].reduce((query, [ key, value ]) => ({ ...query, [ key ]: value }), {});
 
     this.cookies  = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
-      if (cookie.trim() === 'secure' || cookie.trim() === 'httponly') return cookies;
+      const trim = cookie.trim().toLowerCase();
+
+      if (trim === 'secure' || trim === 'httponly') return { ...cookies, [ trim ]: true };
 
       const [ key, value ] = cookie.split('=');
 
-      return { ...cookies, [ key.trim() ]: value };
+      return { ...cookies, [ decodeURIComponent(key.trim()) ]: decodeURIComponent(value) };
     }, {}) ?? {};
   }
 
   respond = (response: HttpResponse): void => {
-    const status  = response.status ?? 200;
+    const status  = response.status  ?? 200;
     const headers = response.headers ?? {};
-    const body    = response.body ?? null;
+    const body    = response.body    ?? null;
 
     response instanceof Response
       ? this.#respond(response)
-      : this.#respond(new Response(body as null, { status, headers }));
+      : this.#respond(new Response(body, { status, headers }));
   };
 
   upgrade = (): Promise<WebSocket | null> => {

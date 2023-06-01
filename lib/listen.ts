@@ -8,20 +8,16 @@ export interface ListenerOptions {
   },
   
   signal?: AbortSignal;
-  starter?: () => void;
 }
 
 export const listen = async (handler: (request: Request, ip: string | null) => Promise<Response>, options: ListenerOptions): Promise<void> => {
   options.port ??= 8000;
-  options.hostname ??= '0.0.0.0';
 
   const { port, hostname, files, signal } = options;
 
   const listener = files?.cert && files?.key
     ? Deno.listenTls({ port, hostname, certFile: files.cert, keyFile: files.key })
     : Deno.listen({ port, hostname });
-
-  options.starter?.();
 
   signal?.addEventListener('abort', () => listener.close());
 
@@ -44,4 +40,4 @@ export const listen = async (handler: (request: Request, ip: string | null) => P
       })().catch(() => {});
     } catch { continue }
   }
-}
+};

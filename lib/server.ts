@@ -1,13 +1,13 @@
 import { HttpRequest } from './event.ts';
 import { listen } from './listen.ts';
 
-export type Handler = (request: HttpRequest) => unknown | Promise<unknown>;
+export type Handler = (request: HttpRequest) => void;
 
 export class HttpServer {
   #signal: AbortSignal | null = null;
   #handlers = new Array<Handler>();
 
-  listen = (port: number, files?: { cert: string, key: string }) => {
+  listen = (port: number, hostname: string | null = null, files?: { cert: string, key: string }) => {
     this.#signal = new AbortController().signal;
 
     listen(async (raw, ip) => {
@@ -18,18 +18,17 @@ export class HttpServer {
       for (const handler of this.#handlers) await handler(request);
 
       return await response as Promise<Response>;
-    }, { port, files, signal: this.#signal });
+    }, { port, hostname: hostname ?? undefined, files, signal: this.#signal });
   };
 
   close = () => {
     this.#signal?.dispatchEvent(new Event('abort'));
-    return this.#signal?.aborted ?? false;
   };
 
   use = (handler: Handler) => {
     const callback = async (request: HttpRequest) => {
       request.params = {};
-      request.route = null;
+      request.route  = null;
 
       await handler(request);
     };
@@ -44,12 +43,12 @@ export class HttpServer {
         const params  = pattern.exec(request.href)?.pathname.groups;
   
         const isPatternPassed = pattern.test(request.href);
-        const isMethodPassed = method == request.method || method == 'ANY';
+        const isMethodPassed  = method == request.method || method == 'ANY';
   
         if (!isPatternPassed || !isMethodPassed) return;
 
         request.params = params ?? {};
-        request.route = route;
+        request.route  = route;
 
         await handler(request);
       };
