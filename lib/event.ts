@@ -17,18 +17,24 @@ export class HttpRequest {
   readonly cookies: Readonly<Record<string, string>>;
   readonly query: Readonly<Record<string, string>>;
   
+  json: () => Promise<unknown>;
+  text: () => Promise<string>;
+
   params: Record<string, string | undefined> = {};
   route: string | null = null;
 
   constructor(request: Request, ip: string | null, respond: (res: Response) => void) {
     this.#request = request;
     this.#respond = respond;
-    
+
     this.ip       = ip;
-    this.href     = request.url;
     this.body     = request.body;
+    this.href     = request.url;
     this.method   = request.method;
     this.referrer = request.referrer;
+
+    this.json     = request.json.bind(request);
+    this.text     = request.text.bind(request);
 
     this.headers  = [ ...request.headers.entries() ].reduce((headers, [ key, value ]) => ({ ...headers, [ key ]: value }), {});
     this.query    = [ ...new URL(request.url).searchParams.entries() ].reduce((query, [ key, value ]) => ({ ...query, [ key ]: value }), {});
