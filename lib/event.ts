@@ -21,7 +21,7 @@ export class HttpRequest {
   text: () => Promise<string>;
 
   params: Record<string, string | undefined> = {};
-  route: string | null = null;
+  route : string | null = null;
 
   constructor(request: Request, ip: string | null, respond: (res: Response) => void) {
     this.#request = request;
