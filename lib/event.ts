@@ -1,21 +1,21 @@
 export interface HttpResponse {
-  body?: null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
+  body   ?: null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
   headers?: Record<string, string> | Headers;
-  status?: number;
+  status ?: number;
 }
 
 export class HttpRequest {
   #request: Request;
   #respond: (res: Response) => void;
 
-  readonly ip: string | null;
-  readonly href: string;
-  readonly body: ReadableStream<Uint8Array> | null;
-  readonly method: string;
+  readonly ip      : string | null;
+  readonly href    : string;
+  readonly body    : ReadableStream<Uint8Array> | null;
+  readonly method  : string;
   readonly referrer: string;
-  readonly headers: Readonly<Record<string, string>>;
-  readonly cookies: Readonly<Record<string, string>>;
-  readonly query: Readonly<Record<string, string>>;
+  readonly headers : Readonly<Record<string, string>>;
+  readonly cookies : Readonly<Record<string, string>>;
+  readonly query   : Readonly<Record<string, string>>;
   
   json: () => Promise<unknown>;
   text: () => Promise<string>;
