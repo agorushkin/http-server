@@ -38,7 +38,7 @@ export class Server {
   };
   
   handle = (method: string, route: string, ...handlers: Handler[]) => {
-    handlers.map(handler => async (request: HttpRequest) => {
+    handlers = handlers.map(handler => async (request: HttpRequest) => {
       const pattern = new URLPattern({ pathname: route });
       const params  = pattern.exec(request.href)?.pathname.groups;
       
@@ -49,7 +49,7 @@ export class Server {
       
       request.params = params ?? {};
       request.route  = route;
-      
+
       await handler(request);
     });
     
