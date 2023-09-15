@@ -6,7 +6,7 @@ export interface ServerResponse {
 
 export class ServerRequest {
   #request: Request;
-  #respond: (res: Response) => void;
+  #respond: (response: Response) => void;
   
   readonly ip      : string | null;
   readonly href    : string;
