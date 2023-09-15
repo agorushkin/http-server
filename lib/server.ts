@@ -1,8 +1,8 @@
-import { HttpRequest } from './event.ts';
+import { ServerRequest } from './event.ts';
 
 import { listen } from './listen.ts';
 
-export type Handler = (request: HttpRequest) => void;
+export type Handler = (request: ServerRequest) => void;
 
 export class Server {
   #signal: AbortSignal | null = null;
@@ -14,7 +14,7 @@ export class Server {
     listen(async (raw, ip) => {
       let   respond: (response: Response)  => void;
       const response = new Promise(resolve => respond = resolve);
-      const request  = new HttpRequest(raw, ip, respond!);
+      const request  = new ServerRequest(raw, ip, respond!);
       
       for (const handler of this.#handlers) await handler(request);
       
@@ -27,7 +27,7 @@ export class Server {
   };
   
   use = (...handlers: Handler[]) => {
-		handlers.map(handler => async (request: HttpRequest) => {
+		handlers.map(handler => async (request: ServerRequest) => {
 			request.params = {};
 			request.route  = null;
 
@@ -38,7 +38,7 @@ export class Server {
   };
   
   handle = (method: string, route: string, ...handlers: Handler[]) => {
-    handlers = handlers.map(handler => async (request: HttpRequest) => {
+    handlers = handlers.map(handler => async (request: ServerRequest) => {
       const pattern = new URLPattern({ pathname: route });
       const params  = pattern.exec(request.href)?.pathname.groups;
       

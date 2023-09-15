@@ -1,10 +1,10 @@
-export interface HttpResponse {
+export interface ServerResponse {
   body   ?: null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
   headers?: Record<string, string> | Headers;
   status ?: number;
 }
 
-export class HttpRequest {
+export class ServerRequest {
   #request: Request;
   #respond: (res: Response) => void;
   
@@ -14,11 +14,12 @@ export class HttpRequest {
   readonly method  : string;
   readonly referrer: string;
   readonly headers : Readonly<Record<string, string>>;
-  readonly cookies : Readonly<Record<string, string>>;
+  readonly cookie  : Readonly<Record<string, string>>;
   readonly query   : Readonly<Record<string, string>>;
   
   json: () => Promise<unknown>;
   text: () => Promise<string>;
+  buffer: () => Promise<ArrayBuffer>;
   
   params: Record<string, string | undefined> = {};
   route : string | null = null;
@@ -35,11 +36,12 @@ export class HttpRequest {
     
     this.json     = request.json.bind(request);
     this.text     = request.text.bind(request);
+    this.buffer   = request.arrayBuffer.bind(request);
     
     this.headers  = [ ...request.headers.entries() ].reduce((headers, [ key, value ]) => ({ ...headers, [ key ]: value }), {});
     this.query    = [ ...new URL(request.url).searchParams.entries() ].reduce((query, [ key, value ]) => ({ ...query, [ key ]: value }), {});
     
-    this.cookies  = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
+    this.cookie   = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
       const trim = cookie.trim().toLowerCase();
       
       if (trim === 'secure' || trim === 'httponly') return { ...cookies, [ trim ]: true };
@@ -50,7 +52,7 @@ export class HttpRequest {
     }, {}) ?? {};
   }
   
-  respond = (response: HttpResponse): void => {
+  respond = (response: ServerResponse): void => {
     const status  = response.status  ?? 200;
     const headers = response.headers ?? {};
     const body    = response.body    ?? null;
