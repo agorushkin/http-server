@@ -21,9 +21,13 @@ export class ServerBrodcaster {
     subscribers?.delete(socket);
   };
 
-  broadcast = (channel: unknown, message: string | Blob | ArrayBufferLike | ArrayBufferView, excluded: WebSocket | null = null): void => {
+  broadcast = (channel: unknown, message: string | Blob | ArrayBufferLike | ArrayBufferView, exclude: WebSocket | WebSocket[] | null = null): void => {
     const subscribers = this.channels.get(channel);
 
-    subscribers?.forEach((socket) => socket !== excluded && socket.send(message));
+    subscribers?.forEach((socket) => {
+      const isExcluded = Array.isArray(exclude) ? exclude.includes(socket) : socket === exclude;
+
+      if (!isExcluded && socket.readyState === WebSocket.OPEN) socket.send(message);
+    });
   };
 }
