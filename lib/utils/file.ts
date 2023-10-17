@@ -1,11 +1,10 @@
-import { ServerResponse } from '../../mod.ts';
-import { MIME_TYPES } from './mime-types.ts';
+import { ServerResponse, extension } from '../../mod.ts';
 
 export const file = async (path: string): Promise<ServerResponse> => {
   path = path?.[0] === '/' ? path : `${ Deno.cwd() }/${ path }`;
 
   const file = await fetch(`file://${ path }`).then(file => file.body).catch(() => null);
-  const type = MIME_TYPES?.[ path.split('.').pop() ?? 'txt' ] ?? 'text/plain';
+  const type = extension(path);
 
   if (!file) return { status: 404 };
 

@@ -7,3 +7,4 @@ export type { ServerRequest, ServerResponse } from './lib/event.ts';
 
 export { file } from './lib/utils/file.ts';
 export { serve } from './lib/utils/serve.ts';
+export { extension } from './lib/utils/extension.ts';

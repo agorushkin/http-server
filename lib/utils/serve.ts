@@ -1,15 +1,14 @@
-import { Handler } from '../../mod.ts';
-import { file } from './file.ts';
+import { Handler, file } from '../../mod.ts';
 
 type StaticRules = {
   default?: {
     'access-control-allow-origin'?: string;
     'cache-control'?: string;
-  },
+  };
 
   paths?: {
     [ route: string ]: string;
-  }
+  };
 };
 
 export const serve = (root: string, rules: StaticRules = {}): Handler => {
