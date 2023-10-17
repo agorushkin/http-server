@@ -4,7 +4,7 @@ export class ServerBrodcaster {
   constructor(channels?: Map<unknown, Set<WebSocket>>) {
     this.channels = channels ?? new Map();
   }
-  
+
   subscribe = (channel: unknown, socket: WebSocket): void => {
     const subscribers = this.channels.get(channel);
 
@@ -30,4 +30,4 @@ export class ServerBrodcaster {
       if (!isExcluded && socket.readyState === WebSocket.OPEN) socket.send(message);
     });
   };
-}
+};
