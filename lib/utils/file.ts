@@ -10,8 +10,11 @@ export const file = async (path: string): Promise<ServerResponse> => {
 
   const stat = await Deno.stat(path);
 
-  const mtime = stat.mtime === null ? new Date().toUTCString() : stat.mtime.toUTCString();
-  const size  = stat.size.toString();
+  const mtime = stat.mtime === null
+    ? new Date().toUTCString()
+    : stat.mtime.toUTCString();
+
+  const size = stat.size.toString();
 
   return {
     status: 200,

@@ -1,9 +1,11 @@
+type MessageType = string | Blob | ArrayBufferLike | ArrayBufferView;
+
 export class ServerBrodcaster {
   channels: Map<unknown, Set<WebSocket>>;
 
   constructor(channels?: Map<unknown, Set<WebSocket>>) {
     this.channels = channels ?? new Map();
-  }
+  };
 
   subscribe = (channel: unknown, socket: WebSocket): void => {
     const subscribers = this.channels.get(channel);
@@ -12,7 +14,7 @@ export class ServerBrodcaster {
 
     subscribers
       ? subscribers.add(socket)
-      : this.channels.set(channel, new Set( [ socket ]));
+      : this.channels.set(channel, new Set([ socket ]));
   };
 
   unsubscribe = (channel: unknown, socket: WebSocket): void => {
@@ -21,11 +23,17 @@ export class ServerBrodcaster {
     subscribers?.delete(socket);
   };
 
-  broadcast = (channel: unknown, message: string | Blob | ArrayBufferLike | ArrayBufferView, exclude: WebSocket | WebSocket[] | null = null): void => {
+  broadcast = (
+    channel: unknown,
+    message: MessageType,
+    exclude: WebSocket | WebSocket[] | null = null,
+  ): void => {
     const subscribers = this.channels.get(channel);
 
     subscribers?.forEach((socket) => {
-      const isExcluded = Array.isArray(exclude) ? exclude.includes(socket) : socket === exclude;
+      const isExcluded = Array.isArray(exclude)
+        ? exclude.includes(socket)
+        : socket === exclude;
 
       if (!isExcluded && socket.readyState === WebSocket.OPEN) socket.send(message);
     });

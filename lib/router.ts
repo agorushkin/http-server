@@ -5,12 +5,16 @@ export class ServerRouter {
 
   readonly base: string;
 
-  constructor(base: string, store?: Handler[]) {
-    this.#handlers = store ?? [];
-    this.base = base;
+  constructor(base: string, list?: Handler[]) {
+    this.#handlers = list ?? [];
+    this.base      = base;
   };
 
-  handle = (method: string, route: string, ...handlers: Handler[]): void => {
+  handle = (
+    method: string,
+    route: string,
+    ...handlers: Handler[]
+  ): void => {
     handlers = handlers.map(handler => async (request: ServerRequest) => {
       const pattern = new URLPattern({ pathname: route });
       const params  = pattern.exec(request.href)?.pathname.groups;
@@ -29,11 +33,11 @@ export class ServerRouter {
     this.#handlers.push(...handlers);
   };
 
-  get    = (route: string, ...handlers: Handler[]) => this.handle('GET',    route, ...handlers);
-  post   = (route: string, ...handlers: Handler[]) => this.handle('POST',   route, ...handlers);
-  put    = (route: string, ...handlers: Handler[]) => this.handle('PUT',    route, ...handlers);
-  delete = (route: string, ...handlers: Handler[]) => this.handle('DELETE', route, ...handlers);
-  patch  = (route: string, ...handlers: Handler[]) => this.handle('PATCH',  route, ...handlers);
+  get    = this.handle.bind(this, 'GET');
+  post   = this.handle.bind(this, 'POST');
+  put    = this.handle.bind(this, 'PUT');
+  delete = this.handle.bind(this, 'DELETE');
+  patch  = this.handle.bind(this, 'PATCH');
 
   [Symbol.iterator] = () => this.#handlers[Symbol.iterator]();
 };

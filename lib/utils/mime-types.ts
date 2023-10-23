@@ -1,4 +1,4 @@
-export const MIME_TYPES:  Record<string, string> = {
+export const MIME_TYPES: Record<string, string> = {
   'md'         : 'text/markdown',
   'html'       : 'text/html',
   'htm'        : 'text/html',

@@ -6,7 +6,7 @@ import { listen } from './listen.ts';
 export type Handler = (request: ServerRequest) => void;
 
 export class Server extends ServerRouter {
-  #signal  : AbortSignal | null = null;
+  #signal ?: AbortSignal;
   #handlers: Handler[];
 
   constructor() {
@@ -16,21 +16,30 @@ export class Server extends ServerRouter {
     this.#handlers = handlers;
   };
 
-  listen = (port: number, hostname: string | null = null, files?: { cert: string, key: string }) => {
+  listen = (
+    port: number,
+    hostname: string | null = null,
+    files?: { cert: string, key: string },
+  ): void => {
     this.#signal = new AbortController().signal;
 
-    listen(async (raw, ip) => {
+    listen(async (raw, addr) => {
       let   respond: (response: Response)  => void;
       const response = new Promise(resolve => respond = resolve);
-      const request  = new ServerRequest(raw, ip, respond!);
+      const request  = new ServerRequest(raw, addr, respond!);
 
       for (const handler of this.#handlers) await handler(request);
 
       return await response as Promise<Response>;
-    }, { port, hostname: hostname ?? undefined, files, signal: this.#signal });
+    }, {
+      port,
+      hostname: hostname ?? undefined,
+      signal: this.#signal,
+      files,
+    });
   };
 
-  close = () => {
+  close = (): void => {
     this.#signal?.dispatchEvent(new Event('abort'));
   };
 

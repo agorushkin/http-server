@@ -1,14 +1,16 @@
+type ServerResponseBody = null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
+
 export type ServerResponse = {
-  body   ?: null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
+  body   ?: ServerResponseBody;
   headers?: Record<string, string> | Headers;
   status ?: number;
-}
+};
 
 export class ServerRequest {
   #request: Request;
   #respond: (response: Response) => void;
 
-  readonly ip      : string | null;
+  readonly addr    : string | null;
   readonly href    : string;
   readonly body    : ReadableStream<Uint8Array> | null;
   readonly method  : string;
@@ -17,18 +19,18 @@ export class ServerRequest {
   readonly cookie  : Readonly<Record<string, string>>;
   readonly query   : Readonly<Record<string, string>>;
 
-  json: () => Promise<unknown>;
+  json: <T = unknown>() => Promise<T>;
   text: () => Promise<string>;
   buffer: () => Promise<ArrayBuffer>;
 
   params: Record<string, string | undefined> = {};
   route : string | null = null;
 
-  constructor(request: Request, ip: string | null, respond: (res: Response) => void) {
+  constructor(request: Request, addr: string | null, respond: (res: Response) => void) {
     this.#request = request;
     this.#respond = respond;
 
-    this.ip       = ip;
+    this.addr     = addr;
     this.body     = request.body;
     this.href     = request.url;
     this.method   = request.method;
@@ -42,15 +44,11 @@ export class ServerRequest {
     this.query    = [ ...new URL(request.url).searchParams.entries() ].reduce((query, [ key, value ]) => ({ ...query, [ key ]: value }), {});
 
     this.cookie   = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
-      const trim = cookie.trim().toLowerCase();
+      const [ key, value ] = cookie.trim().split('=');
 
-      if (trim === 'secure' || trim === 'httponly') return { ...cookies, [ trim ]: true };
-
-      const [ key, value ] = cookie.split('=');
-
-      return { ...cookies, [ decodeURIComponent(key.trim()) ]: decodeURIComponent(value) };
+      return { ...cookies, [ decodeURIComponent(key) ]: decodeURIComponent(value) };
     }, {}) ?? {};
-  }
+  };
 
   respond = (response: ServerResponse): void => {
     const status  = response.status  ?? 200;
@@ -71,11 +69,11 @@ export class ServerRequest {
 
         this.#respond(response);
         resolve(socket);
-      } catch { reject(null) }
+      } catch { reject(null) };
     });
   };
 
-  redirect = (url: string) => {
+  redirect = (url: string): void => {
     this.#respond(new Response(null, { status: 302, headers: { location: url } }));
   };
 };
