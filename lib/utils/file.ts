@@ -1,5 +1,22 @@
 import { ServerResponse, extension } from '../../mod.ts';
 
+/**
+ * Fetches a file and returns it as a `respond` compatible response.
+ *
+ * In success, the response will have a status of `200` and the file as the body.
+ * As well as the `content-type`, `last-modified`, and `content-length` headers.
+ *
+ * In failure, the response will have a status of `404`.
+ *
+ * @param path The path to the file to fetch.
+ *
+ * @example
+ * ```ts
+ * server.get('/main', async ({ respond }) => {
+ *   respond(await file('./main.html'));
+ * });
+ * ```
+*/
 export const file = async (path: string): Promise<ServerResponse> => {
   path = path?.[0] === '/' ? path : `${ Deno.cwd() }/${ path }`;
 

@@ -2,15 +2,29 @@ import { Handler, file } from '../../mod.ts';
 
 type StaticRules = {
   default?: {
+    /** Access control header that is sent with every response sent by the handler. */
     'access-control-allow-origin'?: string;
+    /** Default cache control header that is sent with response if specific to it rule isn't present */
     'cache-control'?: string;
   };
 
   paths?: {
+    /** Cache control header string for a specified file. */
     [ route: string ]: string;
   };
 };
 
+/**
+ * Creates a handler that serves static files from a specified directory.
+ *
+ * @param root The root directory to serve files from.
+ * @param rules The rules to use when serving files.
+ *
+ * @example
+ * ```ts
+ * server.get('/public', serve('./assets/'));
+ * ```
+*/
 export const serve = (root: string, rules: StaticRules = {}): Handler => {
   rules.default ??= {};
   rules.default['access-control-allow-origin'] ??= '*';

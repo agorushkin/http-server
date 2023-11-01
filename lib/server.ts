@@ -5,6 +5,9 @@ import { listen } from './listen.ts';
 
 export type Handler = (request: ServerRequest) => void;
 
+/**
+ * A server class that's used to listen to incoming requests.
+*/
 export class Server extends ServerRouter {
   #signal ?: AbortSignal;
   #handlers: Handler[];
@@ -16,6 +19,21 @@ export class Server extends ServerRouter {
     this.#handlers = handlers;
   };
 
+  /**
+   * Initialize the server.
+   *
+   * @param port The port to listen on.
+   * @param hostname The hostname to listen on.
+   * @param files Required if using HTTPS. The certificate and key files.
+   *
+   * @example
+   * ```ts
+   * server.listen(8080, '0.0.0.0', {
+   *   cert: './cert.pem',
+   *   key: './key.pem',
+   * });
+   * ```
+  */
   listen = (
     port: number,
     hostname: string | null = null,
@@ -39,16 +57,31 @@ export class Server extends ServerRouter {
     });
   };
 
+  /**
+   * Stops the server from accepting any future incoming requests.
+  */
   close = (): void => {
     this.#signal?.dispatchEvent(new Event('abort'));
   };
 
+  /**
+   * Adds a non-route specific handler to the server.
+   *
+   * @param handlers The handlers to use.
+   *
+   * @example
+   * ```ts
+   * server.use(async ({ respond }) => {
+   *   respond({ body: 'Hello, World', status: 200 });
+   * });
+   * ```
+  */
   use = (...handlers: Handler[]): void => {
-		handlers = handlers.map(handler => async (request: ServerRequest) => {
-			request.params = {};
-			request.route  = null;
+    handlers = handlers.map(handler => async (request: ServerRequest) => {
+      request.params = {};
+      request.route  = null;
 
-			await handler(request);
+      await handler(request);
     });
 
     this.#handlers.push(...handlers);
