@@ -1,9 +1,19 @@
 import { ServerRequest } from './event.ts';
 import { ServerRouter } from './router.ts';
 
-import { listen } from './listen.ts';
-
 export type Handler = (request: ServerRequest) => void;
+
+interface ListenerOptions {
+  port?: number;
+  hostname?: string;
+
+  signal?: AbortSignal;
+}
+
+interface TLSOptions {
+  key: string;
+  cert: string;
+}
 
 /**
  * A server class that's used to listen to incoming requests.
@@ -31,25 +41,26 @@ export class Server extends ServerRouter {
    * ```
    */
   listen = (
-    port: number,
-    hostname: string | null = null,
-    files?: { cert: string; key: string },
+    port: number = 8080,
+    hostname?: string,
+    tls?: { cert: string; key: string },
   ): void => {
     this.signal = new AbortController().signal;
 
-    listen(async (raw, addr) => {
-      let respond: (response: Response) => void;
-      const response = new Promise((resolve) => respond = resolve);
-      const request = new ServerRequest(raw, addr, respond!);
-
-      for (const handler of this.handlers) await handler(request);
-
-      return await response as Promise<Response>;
-    }, {
+    Deno.serve({
       port,
-      hostname: hostname ?? undefined,
-      signal: this.signal,
-      files,
+      hostname,
+      ...tls,
+      handler: async (raw, { remoteAddr: addr }) => {
+        let respond: (response: Response) => void;
+        const response = new Promise((resolve) => respond = resolve);
+        const request = new ServerRequest(raw, addr, respond!);
+
+        for (const handler of this.handlers) handler(request);
+
+        return await response as Promise<Response>;
+      },
+      onListen: () => {},
     });
   };
 

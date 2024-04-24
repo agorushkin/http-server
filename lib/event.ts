@@ -18,7 +18,7 @@ export class ServerRequest {
   #respond: (response: Response) => void;
 
   /** The address that the request was made from. Null if unix socket was used. */
-  readonly addr: string | null;
+  readonly addr: Deno.NetAddr;
   /** The full URL that the request was made to. */
   readonly href: string;
   /** The request body. */
@@ -50,7 +50,7 @@ export class ServerRequest {
 
   constructor(
     request: Request,
-    addr: string | null,
+    addr: Deno.NetAddr,
     respond: (res: Response) => void,
   ) {
     this.#request = request;
