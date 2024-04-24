@@ -7,17 +7,13 @@ export type Handler = (request: ServerRequest) => void;
 
 /**
  * A server class that's used to listen to incoming requests.
-*/
+ */
 export class Server extends ServerRouter {
-  #signal ?: AbortSignal;
-  #handlers: Handler[];
+  private signal?: AbortSignal;
 
   constructor() {
-    const handlers: Handler[] = [];
-
-    super('', handlers);
-    this.#handlers = handlers;
-  };
+    super('', []);
+  }
 
   /**
    * Initialize the server.
@@ -33,35 +29,35 @@ export class Server extends ServerRouter {
    *   key: './key.pem',
    * });
    * ```
-  */
+   */
   listen = (
     port: number,
     hostname: string | null = null,
-    files?: { cert: string, key: string },
+    files?: { cert: string; key: string },
   ): void => {
-    this.#signal = new AbortController().signal;
+    this.signal = new AbortController().signal;
 
     listen(async (raw, addr) => {
-      let   respond: (response: Response)  => void;
-      const response = new Promise(resolve => respond = resolve);
-      const request  = new ServerRequest(raw, addr, respond!);
+      let respond: (response: Response) => void;
+      const response = new Promise((resolve) => respond = resolve);
+      const request = new ServerRequest(raw, addr, respond!);
 
-      for (const handler of this.#handlers) await handler(request);
+      for (const handler of this.handlers) await handler(request);
 
       return await response as Promise<Response>;
     }, {
       port,
       hostname: hostname ?? undefined,
-      signal: this.#signal,
+      signal: this.signal,
       files,
     });
   };
 
   /**
    * Stops the server from accepting any future incoming requests.
-  */
+   */
   close = (): void => {
-    this.#signal?.dispatchEvent(new Event('abort'));
+    this.signal?.dispatchEvent(new Event('abort'));
   };
 
   /**
@@ -75,15 +71,15 @@ export class Server extends ServerRouter {
    *   respond({ body: 'Hello, World', status: 200 });
    * });
    * ```
-  */
+   */
   use = (...handlers: Handler[]): void => {
-    handlers = handlers.map(handler => async (request: ServerRequest) => {
+    handlers = handlers.map((handler) => async (request: ServerRequest) => {
       request.params = {};
-      request.route  = null;
+      request.route = null;
 
       await handler(request);
     });
 
-    this.#handlers.push(...handlers);
+    this.handlers.push(...handlers);
   };
-};
+}

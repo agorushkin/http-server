@@ -1,10 +1,15 @@
-type ServerResponseBody = null | string | ArrayBufferLike | FormData | ReadableStream<Uint8Array>;
+type ServerResponseBody =
+  | null
+  | string
+  | ArrayBufferLike
+  | FormData
+  | ReadableStream<Uint8Array>;
 
 /** The response data that can be sent in response. */
 export type ServerResponse = {
-  body   ?: ServerResponseBody;
+  body?: ServerResponseBody;
   headers?: Record<string, string> | Headers;
-  status ?: number;
+  status?: number;
 };
 
 /** The request class that is passed to handlers. */
@@ -13,21 +18,23 @@ export class ServerRequest {
   #respond: (response: Response) => void;
 
   /** The address that the request was made from. Null if unix socket was used. */
-  readonly addr    : string | null;
+  readonly addr: string | null;
   /** The full URL that the request was made to. */
-  readonly href    : string;
+  readonly href: string;
   /** The request body. */
-  readonly body    : ReadableStream<Uint8Array> | null;
+  readonly body: ReadableStream<Uint8Array> | null;
   /** The HTTP method used to make the request. */
-  readonly method  : string;
+  readonly method: string;
   /** The referrer of the request. */
   readonly referrer: string;
   /** The request headers. */
-  readonly headers : Readonly<Record<string, string>>;
+  readonly headers: Readonly<Record<string, string>>;
   /** The request cookies. */
-  readonly cookie  : Readonly<Record<string, string>>;
+  readonly cookie: Readonly<Record<string, string>>;
   /** The request query. */
-  readonly query   : Readonly<Record<string, string>>;
+  readonly query: Readonly<Record<string, string | string[]>>;
+  /** Has the request been responded to yet. */
+  responded = false;
 
   /** Consumes the request body and attempts to parse it to JSON, */
   json: <T = unknown>() => Promise<T>;
@@ -39,31 +46,44 @@ export class ServerRequest {
   /** Parameters that have been parsed from a spciefied route. */
   params: Record<string, string | undefined> = {};
   /** The route that the request was made to. Null if no route was specified. */
-  route : string | null = null;
+  route: string | null = null;
 
-  constructor(request: Request, addr: string | null, respond: (res: Response) => void) {
+  constructor(
+    request: Request,
+    addr: string | null,
+    respond: (res: Response) => void,
+  ) {
     this.#request = request;
     this.#respond = respond;
 
-    this.addr     = addr;
-    this.body     = request.body;
-    this.href     = request.url;
-    this.method   = request.method;
+    this.addr = addr;
+    this.body = request.body;
+    this.href = request.url;
+    this.method = request.method;
     this.referrer = request.referrer;
 
-    this.json     = request.json.bind(request);
-    this.text     = request.text.bind(request);
-    this.buffer   = request.arrayBuffer.bind(request);
+    this.json = request.json.bind(request);
+    this.text = request.text.bind(request);
+    this.buffer = request.arrayBuffer.bind(request);
 
-    this.headers  = [ ...request.headers.entries() ].reduce((headers, [ key, value ]) => ({ ...headers, [ key ]: value }), {});
-    this.query    = [ ...new URL(request.url).searchParams.entries() ].reduce((query, [ key, value ]) => ({ ...query, [ key ]: value }), {});
+    this.headers = [...request.headers.entries()].reduce(
+      (headers, [key, value]) => ({ ...headers, [key]: value }),
+      {},
+    );
+    this.query = [...new URL(request.url).searchParams.entries()].reduce(
+      (query, [key, value]) => ({ ...query, [key]: value }),
+      {},
+    );
 
-    this.cookie   = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
-      const [ key, value ] = cookie.trim().split('=');
+    this.cookie = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
+      const [key, value] = cookie.trim().split('=');
 
-      return { ...cookies, [ decodeURIComponent(key) ]: decodeURIComponent(value) };
+      return {
+        ...cookies,
+        [decodeURIComponent(key)]: decodeURIComponent(value),
+      };
     }, {}) ?? {};
-  };
+  }
 
   /**
    * Responds to the request with the given response.
@@ -79,15 +99,15 @@ export class ServerRequest {
    *     status: 200,
    *   });
    * });
-  */
+   */
   respond = (response: ServerResponse): void => {
-    const status  = response.status  ?? 200;
+    const status = response.status ?? 200;
     const headers = response.headers ?? {};
-    const body    = response.body    ?? null;
+    const body = response.body ?? null;
 
     response instanceof Response
-    ? this.#respond(response)
-    : this.#respond(new Response(body, { status, headers }));
+      ? this.#respond(response)
+      : this.#respond(new Response(body, { status, headers }));
   };
 
   /**
@@ -104,7 +124,7 @@ export class ServerRequest {
    *
    *   socket.send('Hello, World');
    * });
-  */
+   */
   upgrade = (): Promise<WebSocket | null> => {
     return new Promise((resolve, reject) => {
       if (this.#request.headers.get('upgrade') !== 'websocket') reject(null);
@@ -114,7 +134,9 @@ export class ServerRequest {
 
         this.#respond(response);
         resolve(socket);
-      } catch { reject(null) };
+      } catch {
+        reject(null);
+      }
     });
   };
 
@@ -128,8 +150,11 @@ export class ServerRequest {
    * server.get('/search', ({ redirect }) => {
    *   redirect('https://google.com');
    * });
-  */
+   */
   redirect = (url: string): void => {
-    this.#respond(new Response(null, { status: 302, headers: { location: url } }));
+    this.responded = true;
+    this.#respond(
+      new Response(null, { status: 302, headers: { location: url } }),
+    );
   };
-};
+}

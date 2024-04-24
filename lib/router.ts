@@ -7,12 +7,12 @@ import { Handler, ServerRequest } from '../mod.ts';
  * const server = new Server();
  * const router = new ServerRouter('/api');
  *
- * router.get(...apiEndpointHandlers);
+ * router.get(...handlers);
  *
  * server.use(...router);
-*/
+ */
 export class ServerRouter {
-  #handlers: Handler[];
+  protected handlers: Handler[];
 
   readonly base: string;
 
@@ -21,11 +21,11 @@ export class ServerRouter {
    *
    * @param base The base path for the router.
    * @param list The list of handlers to use, as well as location to store.
-  */
+   */
   constructor(base: string, list?: Handler[]) {
-    this.#handlers = list ?? [];
-    this.base      = base;
-  };
+    this.handlers = list ?? [];
+    this.base = base;
+  }
 
   /**
    * Adds a route and method specific handler to the server.
@@ -40,28 +40,28 @@ export class ServerRouter {
    *   respondI({ body: 'Hello, World!', status: 200 });
    * });
    * ```
-  */
+   */
   handle = (
     method: string,
     route: string,
     ...handlers: Handler[]
   ): void => {
-    handlers = handlers.map(handler => async (request: ServerRequest) => {
+    handlers = handlers.map((handler) => async (request: ServerRequest) => {
       const pattern = new URLPattern({ pathname: route });
-      const params  = pattern.exec(request.href)?.pathname.groups;
+      const params = pattern.exec(request.href)?.pathname.groups;
 
       const isPatternPassed = pattern.test(request.href);
-      const isMethodPassed  = method == request.method || method == 'ANY';
+      const isMethodPassed = method == request.method || method == 'ANY';
 
       if (!isPatternPassed || !isMethodPassed) return;
 
       request.params = params ?? {};
-      request.route  = `${ this.base }${ route }`;
+      request.route = `${this.base}${route}`;
 
       await handler(request);
     });
 
-    this.#handlers.push(...handlers);
+    this.handlers.push(...handlers);
   };
 
   /**
@@ -69,31 +69,31 @@ export class ServerRouter {
    *
    * @param route The route to handle.
    * @param handlers The handlers to use.
-  */
-  get    = this.handle.bind(this, 'GET');
+   */
+  get = this.handle.bind(this, 'GET');
 
   /**
    * Adds a POST route handler to the server.
    *
    * @param route The route to handle.
    * @param handlers The handlers to use.
-  */
-  post   = this.handle.bind(this, 'POST');
+   */
+  post = this.handle.bind(this, 'POST');
 
   /**
    * Adds a PUT route handler to the server.
    *
    * @param route The route to handle.
    * @param handlers The handlers to use.
-  */
-  put    = this.handle.bind(this, 'PUT');
+   */
+  put = this.handle.bind(this, 'PUT');
 
   /**
    * Adds a DELETE route handler to the server.
    *
    * @param route The route to handle.
    * @param handlers The handlers to use.
-  */
+   */
   delete = this.handle.bind(this, 'DELETE');
 
   /**
@@ -101,8 +101,8 @@ export class ServerRouter {
    *
    * @param route The route to handle.
    * @param handlers The handlers to use.
-  */
-  patch  = this.handle.bind(this, 'PATCH');
+   */
+  patch = this.handle.bind(this, 'PATCH');
 
-  [Symbol.iterator] = () => this.#handlers[Symbol.iterator]();
-};
+  [Symbol.iterator] = () => this.handlers[Symbol.iterator]();
+}

@@ -12,10 +12,10 @@ import { MIME_TYPES } from './mime-types.ts';
  * extension('index.js');   // text/javascript
  * extension('index.json'); // application/json
  * ```
-*/
+ */
 export const extension = (path: string): string => {
   const extension = path.split('.').pop();
-  const mime = MIME_TYPES[ `${ extension }` ] ?? MIME_TYPES[ 'txt' ];
+  const mime = MIME_TYPES[`${extension}`] ?? MIME_TYPES['txt'];
 
   return mime;
 };

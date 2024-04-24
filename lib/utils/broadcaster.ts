@@ -6,7 +6,7 @@ export class ServerBrodcaster {
 
   constructor(channels?: Map<unknown, Set<WebSocket>>) {
     this.channels = channels ?? new Map();
-  };
+  }
 
   /**
    * Subscribes a WebSocket to a channel.
@@ -28,7 +28,7 @@ export class ServerBrodcaster {
    *   channels.subscribe('channel', socket);
    * });
    * ```
-  */
+   */
   subscribe = (channel: unknown, socket: WebSocket): void => {
     const subscribers = this.channels.get(channel);
 
@@ -36,7 +36,7 @@ export class ServerBrodcaster {
 
     subscribers
       ? subscribers.add(socket)
-      : this.channels.set(channel, new Set([ socket ]));
+      : this.channels.set(channel, new Set([socket]));
   };
 
   /**
@@ -44,7 +44,7 @@ export class ServerBrodcaster {
    *
    * @param channel The channel to unsubscribe from.
    * @param socket The WebSocket to unsubscribe.
-  */
+   */
   unsubscribe = (channel: unknown, socket: WebSocket): void => {
     const subscribers = this.channels.get(channel);
 
@@ -75,7 +75,7 @@ export class ServerBrodcaster {
    *
    *   respond({ body: 'Broadcasted message!' });
    * });
-  */
+   */
   broadcast = (
     channel: unknown,
     message: MessageType,
@@ -88,7 +88,9 @@ export class ServerBrodcaster {
         ? exclude.includes(socket)
         : socket === exclude;
 
-      if (!isExcluded && socket.readyState === WebSocket.OPEN) socket.send(message);
+      if (!isExcluded && socket.readyState === WebSocket.OPEN) {
+        socket.send(message);
+      }
     });
   };
-};
+}

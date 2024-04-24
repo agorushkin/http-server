@@ -1,4 +1,4 @@
-import { ServerResponse, extension } from '../../mod.ts';
+import { extension, ServerResponse } from '../../mod.ts';
 
 /**
  * Fetches a file and returns it as a `respond` compatible response.
@@ -16,11 +16,13 @@ import { ServerResponse, extension } from '../../mod.ts';
  *   respond(await file('./main.html'));
  * });
  * ```
-*/
+ */
 export const file = async (path: string): Promise<ServerResponse> => {
-  path = path?.[0] === '/' ? path : `${ Deno.cwd() }/${ path }`;
+  path = path?.[0] === '/' ? path : `${Deno.cwd()}/${path}`;
 
-  const file = await fetch(`file://${ path }`).then(file => file.body).catch(() => null);
+  const file = await fetch(`file://${path}`).then((file) => file.body).catch(
+    () => null,
+  );
   const type = extension(path);
 
   if (!file) return { status: 404 };
