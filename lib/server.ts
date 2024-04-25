@@ -1,7 +1,7 @@
 import { ServerRequest } from './event.ts';
 import { ServerRouter } from './router.ts';
 
-export type Handler = (request: ServerRequest) => void;
+export type Handler = (request: ServerRequest) => void | Promise<void>;
 
 interface ListenerOptions {
   port?: number;
@@ -56,7 +56,7 @@ export class Server extends ServerRouter {
         const response = new Promise((resolve) => respond = resolve);
         const request = new ServerRequest(raw, addr, respond!);
 
-        for (const handler of this.handlers) handler(request);
+        for (const handler of this.handlers) await handler(request);
 
         return await response as Promise<Response>;
       },
