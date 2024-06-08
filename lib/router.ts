@@ -55,7 +55,10 @@ export class ServerRouter {
 
       if (!isPatternPassed || !isMethodPassed) return;
 
-      request.params = params ?? {};
+      const paramsMap = new Map<string, string | undefined>();
+      for (const key in params) paramsMap.set(key, params[key]);
+
+      request.params = paramsMap;
       request.route = `${this.base}${route}`;
 
       await handler(request);

@@ -28,11 +28,11 @@ export class ServerRequest {
   /** The referrer of the request. */
   readonly referrer: string;
   /** The request headers. */
-  readonly headers: Readonly<Record<string, string>>;
+  readonly headers: Headers;
   /** The request cookies. */
-  readonly cookie: Readonly<Record<string, string>>;
+  readonly cookie: Map<string, string>;
   /** The request query. */
-  readonly query: Readonly<Record<string, string | string[]>>;
+  readonly query: URLSearchParams;
   /** Has the request been responded to yet. */
   responded = false;
 
@@ -44,7 +44,7 @@ export class ServerRequest {
   buffer: () => Promise<ArrayBuffer>;
 
   /** Parameters that have been parsed from a spciefied route. */
-  params: Record<string, string | undefined> = {};
+  params: Map<string, string | undefined> = new Map();
   /** The route that the request was made to. Null if no route was specified. */
   route: string | null = null;
 
@@ -66,23 +66,23 @@ export class ServerRequest {
     this.text = request.text.bind(request);
     this.buffer = request.arrayBuffer.bind(request);
 
-    this.headers = [...request.headers.entries()].reduce(
-      (headers, [key, value]) => ({ ...headers, [key]: value }),
-      {},
-    );
-    this.query = [...new URL(request.url).searchParams.entries()].reduce(
-      (query, [key, value]) => ({ ...query, [key]: value }),
-      {},
-    );
+    this.headers = request.headers;
+    this.query = new URL(request.url).searchParams;
 
-    this.cookie = this.headers.cookie?.split(';').reduce((cookies, cookie) => {
-      const [key, value] = cookie.trim().split('=');
+    this.cookie = new Map();
 
-      return {
-        ...cookies,
-        [decodeURIComponent(key)]: decodeURIComponent(value),
-      };
-    }, {}) ?? {};
+    if (this.headers.has('cookie')) {
+      const cookie = this.headers.get('cookie');
+      const crumbs = cookie?.split(';');
+
+      for (const crumb in crumbs) {
+        const [key, value] = crumb.split('=');
+        this.cookie.set(
+          decodeURIComponent(key.trim()),
+          decodeURIComponent(value.trim()),
+        );
+      }
+    }
   }
 
   /**

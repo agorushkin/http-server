@@ -85,7 +85,7 @@ export class Server extends ServerRouter {
    */
   use = (...handlers: Handler[]): void => {
     handlers = handlers.map((handler) => async (request: ServerRequest) => {
-      request.params = {};
+      request.params = new Map();
       request.route = null;
 
       await handler(request);
