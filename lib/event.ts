@@ -108,6 +108,8 @@ export class ServerRequest {
     response instanceof Response
       ? this.#respond(response)
       : this.#respond(new Response(body, { status, headers }));
+
+    this.responded = true;
   };
 
   /**
@@ -133,6 +135,7 @@ export class ServerRequest {
         const { socket, response } = Deno.upgradeWebSocket(this.#request);
 
         this.#respond(response);
+        this.responded = true;
         resolve(socket);
       } catch {
         reject(null);
