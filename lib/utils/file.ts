@@ -38,10 +38,10 @@ export const file = async (path: string): Promise<ServerResponse> => {
   return {
     status: 200,
     body: file,
-    headers: {
-      'content-type': type,
-      'last-modified': mtime,
-      'content-length': size,
-    },
+    headers: new Headers([
+      ['content-type', type],
+      ['last-modified', mtime],
+      ['content-length', size],
+    ]),
   };
 };

@@ -43,18 +43,21 @@ export const serve = (root: string, rules: StaticRules = {}): Handler => {
 
     if (response.status === 404) return respond(response);
 
-    const size =
-      (response.headers as Record<string, string>)['content-length']!;
-    const mtime =
-      (response.headers as Record<string, string>)['last-modified']!;
+    const headers = response.headers;
+
+    const size = headers?.get('content-length')!;
+    const mtime = headers?.get('last-modified')!;
     const etag = `"${size}-${mtime}"`;
 
-    const headers = { ...response.headers, etag } as Record<string, string>;
-
-    headers['access-control-allow-origin'] = rules
-      .default!['access-control-allow-origin']!;
-    headers['cache-control'] = rules.paths?.[`/${path}`] ??
-      rules.default!['cache-control']!;
+    headers?.append('etag', etag);
+    headers?.append(
+      'access-control-allow-origin',
+      rules.default!['access-control-allow-origin']!,
+    );
+    headers?.append(
+      'cache-control',
+      rules.paths?.[`/${path}`] ?? rules.default!['cache-control']!,
+    );
 
     respond({ ...response, headers });
   };

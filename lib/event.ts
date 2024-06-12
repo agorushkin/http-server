@@ -8,7 +8,7 @@ type ServerResponseBody =
 /** The response data that can be sent in response. */
 export type ServerResponse = {
   body?: ServerResponseBody;
-  headers?: Record<string, string> | Headers;
+  headers?: Headers;
   status?: number;
 };
 
