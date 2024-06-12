@@ -16,7 +16,7 @@ export type ServerResponse = {
 export class ServerRequest {
   #request: Request;
   #respond: (response: Response) => void;
-  response: ServerResponse;
+  response: Required<ServerResponse>;
 
   /** The address that the request was made from. Null if unix socket was used. */
   readonly addr: Deno.NetAddr;
