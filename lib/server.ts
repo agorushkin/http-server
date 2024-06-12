@@ -57,6 +57,7 @@ export class Server extends ServerRouter {
         const request = new ServerRequest(raw, addr, respond!);
 
         for (const handler of this.handlers) await handler(request);
+        if (!request.responded) request.respond(request.response);
 
         return await response as Promise<Response>;
       },

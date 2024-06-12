@@ -16,6 +16,7 @@ export type ServerResponse = {
 export class ServerRequest {
   #request: Request;
   #respond: (response: Response) => void;
+  response: ServerResponse;
 
   /** The address that the request was made from. Null if unix socket was used. */
   readonly addr: Deno.NetAddr;
@@ -55,6 +56,11 @@ export class ServerRequest {
   ) {
     this.#request = request;
     this.#respond = respond;
+    this.response = {
+      body: null,
+      headers: new Headers(),
+      status: 404,
+    };
 
     this.addr = addr;
     this.body = request.body;
