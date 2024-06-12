@@ -16,8 +16,9 @@ export type ServerResponse = {
 export class ServerRequest {
   #request: Request;
   #respond: (response: Response) => void;
-  response: Required<ServerResponse>;
 
+  /** Response context that can be used accross handlers. Will be used if `respond` function hadn't been called by the end of the cycle */
+  response: Required<ServerResponse>;
   /** The address that the request was made from. Null if unix socket was used. */
   readonly addr: Deno.NetAddr;
   /** The full URL that the request was made to. */
@@ -107,9 +108,9 @@ export class ServerRequest {
    * });
    */
   respond = (response: ServerResponse): void => {
-    const status = response.status ?? 200;
-    const headers = response.headers ?? {};
-    const body = response.body ?? null;
+    const status = response?.status ?? 200;
+    const headers = response?.headers ?? this.response.headers;
+    const body = response?.body ?? this.response.body;
 
     response instanceof Response
       ? this.#respond(response)
