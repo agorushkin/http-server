@@ -107,7 +107,7 @@ export class ServerRequest {
    *   });
    * });
    */
-  respond = (response: ServerResponse): void => {
+  respond = (response?: ServerResponse): void => {
     const status = response?.status ?? 200;
     const headers = response?.headers ?? this.response.headers;
     const body = response?.body ?? this.response.body;
