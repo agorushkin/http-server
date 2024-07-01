@@ -8,7 +8,7 @@ type ServerResponseBody =
 /** The response data that can be sent in response. */
 export type ServerResponse = {
   body?: ServerResponseBody;
-  headers?: Headers;
+  headers?: Headers | Record<string, string>;
   status?: number;
 };
 
@@ -99,7 +99,7 @@ export class ServerRequest {
    *
    * @example
    * ```ts
-   * server.get('/hello', ({ respond }) => {
+   * server.get('/hello', ({ respond }) => {››
    *   respond({
    *     body: 'Hello, World!',
    *     headers: { 'Content-Type': 'text/plain' },
@@ -108,7 +108,7 @@ export class ServerRequest {
    * });
    */
   respond = (response?: ServerResponse): void => {
-    const status = response?.status ?? 200;
+    const status = response?.status ?? this.response.status;
     const headers = response?.headers ?? this.response.headers;
     const body = response?.body ?? this.response.body;
 
