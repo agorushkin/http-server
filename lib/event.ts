@@ -18,7 +18,7 @@ export class ServerRequest {
   #respond: (response: Response) => void;
 
   /** Response context that can be used accross handlers. Will be used if `respond` function hadn't been called by the end of the cycle */
-  response: Required<ServerResponse>;
+  response: Required<Omit<ServerResponse, 'headers'> & { headers: Headers }>;
   /** The address that the request was made from. Null if unix socket was used. */
   readonly addr: Deno.NetAddr;
   /** The full URL that the request was made to. */
