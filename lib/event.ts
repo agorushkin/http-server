@@ -82,8 +82,10 @@ export class ServerRequest {
       const cookie = this.headers.get('cookie');
       const crumbs = cookie?.split(';');
 
-      for (const crumb in crumbs) {
-        const [key, value] = crumb.split('=');
+      if (!crumbs) return;
+
+      for (const crumb of crumbs) {
+        const [key, value] = [...crumb.split('='), ''];
         this.cookie.set(
           decodeURIComponent(key.trim()),
           decodeURIComponent(value.trim()),
