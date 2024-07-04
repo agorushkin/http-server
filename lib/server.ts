@@ -3,17 +3,21 @@ import { ServerRouter } from './router.ts';
 
 export type Handler = (request: ServerRequest) => void | Promise<void>;
 
-interface ListenerOptions {
+type ServerOptions = {
+  /** The port to listen on. Default is `8000`. */
   port?: number;
+  /** The hostname to listen on. Default is `"127.0.0.1"`. */
   hostname?: string;
-
+  /** The TLS configuration to use. */
+  tls?: {
+    /** The content of the key file. */
+    key: string;
+    /** The content of the certificate file. */
+    cert: string;
+  };
+  /** The signal to use for aborting the server. */
   signal?: AbortSignal;
-}
-
-interface TLSOptions {
-  key: string;
-  cert: string;
-}
+};
 
 /**
  * A server class that's used to listen to incoming requests.
@@ -28,29 +32,25 @@ export class Server extends ServerRouter {
   /**
    * Initialize the server.
    *
-   * @param port The port to listen on.
-   * @param hostname The hostname to listen on.
-   * @param files Required if using HTTPS. The certificate and key files.
+   * @param options The options to use when initializing the server.
    *
    * @example
    * ```ts
-   * server.listen(8080, '0.0.0.0', {
-   *   cert: './cert.pem',
-   *   key: './key.pem',
+   * server.listen({
+   *   port: 8000,
+   *   hostname: '127.0.0.1',
+   *   tls: {
+   *     cert: //...file.crt content,
+   *     key: //...file.key content,
+   *   },
    * });
    * ```
    */
-  listen = (
-    port: number = 8080,
-    hostname?: string,
-    tls?: { cert: string; key: string },
-  ): void => {
+  listen = (options: ServerOptions): void => {
     this.signal = new AbortController().signal;
 
     Deno.serve({
-      port,
-      hostname,
-      ...tls,
+      ...options,
       handler: async (raw, { remoteAddr: addr }) => {
         let respond: (response: Response) => void;
         const response = new Promise((resolve) => respond = resolve);
@@ -66,7 +66,7 @@ export class Server extends ServerRouter {
   };
 
   /**
-   * Stops the server from accepting any future incoming requests.
+   * Closes server listener.
    */
   close = (): void => {
     this.signal?.dispatchEvent(new Event('abort'));

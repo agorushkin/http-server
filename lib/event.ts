@@ -17,7 +17,7 @@ export class ServerRequest {
   #request: Request;
   #respond: (response: Response) => void;
 
-  /** Response context that can be used accross handlers. Will be used if `respond` function hadn't been called by the end of the cycle */
+  /** Response context that can be used accross handlers. Will be used if `respond` function hadn't been called by the end of the cycle. */
   response: Required<Omit<ServerResponse, 'headers'> & { headers: Headers }>;
   /** The address that the request was made from. Null if unix socket was used. */
   readonly addr: Deno.NetAddr;
@@ -37,13 +37,25 @@ export class ServerRequest {
   readonly query: URLSearchParams;
   /** Has the request been responded to yet. */
   responded = false;
+  /** Can the request be upgraded. */
+  upgradable = false;
+  /** Has the request been upgraded yet. */
+  upgraded = false;
 
-  /** Consumes the request body and attempts to parse it to JSON, */
+  /** Consumes the request body and attempts to parse it to JSON. */
   json: <T = unknown>() => Promise<T>;
   /** Consumes the request body and converts it to string. */
   text: () => Promise<string>;
-  /** Consumes the request body and returns it as ArrayBuffer */
+  /** Consumes the request body and returns it as ArrayBuffer. */
   buffer: () => Promise<ArrayBuffer>;
+  /** Consumes the request body and returns it as a FormData object. */
+  form: () => Promise<FormData>;
+  /** Consumes the request body and returns it as a Blob object. */
+  blob: () => Promise<Blob>;
+  /** Has the request body been consumed yet. */
+  get consumed() {
+    return this.#request.bodyUsed;
+  }
 
   /** Parameters that have been parsed from a spciefied route. */
   params: Map<string, string | undefined> = new Map();
@@ -72,6 +84,8 @@ export class ServerRequest {
     this.json = request.json.bind(request);
     this.text = request.text.bind(request);
     this.buffer = request.arrayBuffer.bind(request);
+    this.form = request.formData.bind(request);
+    this.blob = request.blob.bind(request);
 
     this.headers = request.headers;
     this.query = new URL(request.url).searchParams;
@@ -92,6 +106,14 @@ export class ServerRequest {
         );
       }
     }
+
+    const upgrade = this.headers.get('upgrade');
+    const secret = this.headers.get('sec-websocket-key');
+
+    if (
+      upgrade?.toLowerCase() === 'websocket' &&
+      secret && secret !== ''
+    ) this.upgradable = true;
   }
 
   /**
@@ -138,13 +160,14 @@ export class ServerRequest {
    */
   upgrade = (): Promise<WebSocket | null> => {
     return new Promise((resolve, reject) => {
-      if (this.#request.headers.get('upgrade') !== 'websocket') reject(null);
+      if (!this.upgradable || this.upgraded) return reject(null);
 
       try {
         const { socket, response } = Deno.upgradeWebSocket(this.#request);
 
         this.#respond(response);
         this.responded = true;
+        this.upgraded = true;
         resolve(socket);
       } catch {
         reject(null);
