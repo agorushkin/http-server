@@ -1,7 +1,6 @@
 import { ServerRequest } from './event.ts';
 import { ServerRouter } from './router.ts';
-
-export type Handler = (request: ServerRequest) => void | Promise<void>;
+import { Deferer, Handler } from './router.ts';
 
 type ServerOptions = {
   /** The port to listen on. Default is `8000`. */
@@ -28,6 +27,17 @@ export class Server extends ServerRouter {
   constructor() {
     super('', []);
   }
+
+  #process = async (request: ServerRequest) => {
+    const run = async (index: number) => {
+      if (index >= this.handlers.length) return;
+
+      const handler = this.handlers[index];
+      await handler(request, () => run(index + 1));
+    };
+
+    await run(0);
+  };
 
   /**
    * Initialize the server.
@@ -56,7 +66,7 @@ export class Server extends ServerRouter {
         const response = new Promise((resolve) => respond = resolve);
         const request = new ServerRequest(raw, addr, respond!);
 
-        for (const handler of this.handlers) await handler(request);
+        await this.#process(request);
         if (!request.responded) request.respond(request.response);
 
         return await response as Promise<Response>;
@@ -85,12 +95,14 @@ export class Server extends ServerRouter {
    * ```
    */
   use = (...handlers: Handler[]): void => {
-    handlers = handlers.map((handler) => async (request: ServerRequest) => {
-      request.params = new Map();
-      request.route = null;
+    handlers = handlers.map(
+      (handler) => async (request: ServerRequest, defer: Deferer) => {
+        request.params = new Map();
+        request.route = null;
 
-      await handler(request);
-    });
+        await handler(request, defer);
+      },
+    );
 
     this.handlers.push(...handlers);
   };

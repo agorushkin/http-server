@@ -1,4 +1,11 @@
-import { Handler, ServerRequest } from '../mod.ts';
+import { ServerRequest } from './event.ts';
+
+export type Deferer = () => Promise<void>;
+
+export type Handler = (
+  request: ServerRequest,
+  defer: Deferer,
+) => void | Promise<void>;
 
 /** The routing agent that can be used to create routes for the server.
  *
@@ -46,23 +53,25 @@ export class ServerRouter {
     route: string,
     ...handlers: Handler[]
   ): void => {
-    handlers = handlers.map((handler) => async (request: ServerRequest) => {
-      const pattern = new URLPattern({ pathname: route });
-      const params = pattern.exec(request.href)?.pathname.groups;
+    handlers = handlers.map(
+      (handler) => async (request: ServerRequest, defer: Deferer) => {
+        const pattern = new URLPattern({ pathname: route });
+        const match = pattern.exec(request.href)?.pathname.groups;
 
-      const isPatternPassed = pattern.test(request.href);
-      const isMethodPassed = method == request.method || method == 'ANY';
+        const isPatternPassed = pattern.test(request.href);
+        const isMethodPassed = method == request.method || method == 'ANY';
 
-      if (!isPatternPassed || !isMethodPassed) return;
+        if (!isPatternPassed || !isMethodPassed) return;
 
-      const paramsMap = new Map<string, string | undefined>();
-      for (const key in params) paramsMap.set(key, params[key]);
+        const params = new Map<string, string | undefined>();
+        for (const key in match) params.set(key, match[key]);
 
-      request.params = paramsMap;
-      request.route = `${this.base}${route}`;
+        request.params = params;
+        request.route = `${this.base}${route}`;
 
-      await handler(request);
-    });
+        await handler(request, defer);
+      },
+    );
 
     this.handlers.push(...handlers);
   };

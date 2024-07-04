@@ -2,7 +2,7 @@ export { Server } from './lib/server.ts';
 export { ServerRouter } from './lib/router.ts';
 export { ServerBrodcaster } from './lib/utils/broadcaster.ts';
 
-export type { Handler } from './lib/server.ts';
+export type { Handler } from './lib/router.ts';
 export type { ServerRequest, ServerResponse } from './lib/event.ts';
 
 export { file } from './lib/utils/file.ts';
