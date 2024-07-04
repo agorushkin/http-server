@@ -1,9 +1,9 @@
-import { ServerRequest } from './event.ts';
+import type { Locals, ServerRequest } from './event.ts';
 
 export type Deferer = () => Promise<void>;
 
-export type Handler = (
-  request: ServerRequest,
+export type Handler<L extends Locals> = (
+  request: ServerRequest<L>,
   defer: Deferer,
 ) => void | Promise<void>;
 
@@ -18,8 +18,8 @@ export type Handler = (
  *
  * server.use(...router);
  */
-export class ServerRouter {
-  protected handlers: Handler[];
+export class ServerRouter<L extends Locals> {
+  protected handlers: Handler<L>[];
 
   readonly base: string;
 
@@ -29,7 +29,7 @@ export class ServerRouter {
    * @param base The base path for the router.
    * @param list The list of handlers to use, as well as location to store.
    */
-  constructor(base: string, list?: Handler[]) {
+  constructor(base: string, list?: Handler<L>[]) {
     this.handlers = list ?? [];
     this.base = base;
   }
@@ -51,10 +51,10 @@ export class ServerRouter {
   handle = (
     method: string,
     route: string,
-    ...handlers: Handler[]
+    ...handlers: Handler<L>[]
   ): void => {
     handlers = handlers.map(
-      (handler) => async (request: ServerRequest, defer: Deferer) => {
+      (handler) => async (request: ServerRequest<L>, defer: Deferer) => {
         const pattern = new URLPattern({ pathname: route });
         const match = pattern.exec(request.href)?.pathname.groups;
 

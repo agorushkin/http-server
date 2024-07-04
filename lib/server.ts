@@ -1,3 +1,5 @@
+import type { Locals } from './event.ts';
+
 import { ServerRequest } from './event.ts';
 import { ServerRouter } from './router.ts';
 import { Deferer, Handler } from './router.ts';
@@ -21,14 +23,14 @@ type ServerOptions = {
 /**
  * A server class that's used to listen to incoming requests.
  */
-export class Server extends ServerRouter {
+export class Server<L extends Locals = Locals> extends ServerRouter<L> {
   private signal?: AbortSignal;
 
   constructor() {
     super('', []);
   }
 
-  #process = async (request: ServerRequest) => {
+  #process = async (request: ServerRequest<L>) => {
     const run = async (index: number) => {
       if (index >= this.handlers.length) return;
 
@@ -64,7 +66,7 @@ export class Server extends ServerRouter {
       handler: async (raw, { remoteAddr: addr }) => {
         let respond: (response: Response) => void;
         const response = new Promise((resolve) => respond = resolve);
-        const request = new ServerRequest(raw, addr, respond!);
+        const request = new ServerRequest<L>(raw, addr, respond!);
 
         await this.#process(request);
         if (!request.responded) request.respond(request.response);
@@ -94,9 +96,9 @@ export class Server extends ServerRouter {
    * });
    * ```
    */
-  use = (...handlers: Handler[]): void => {
+  use = (...handlers: Handler<L>[]): void => {
     handlers = handlers.map(
-      (handler) => async (request: ServerRequest, defer: Deferer) => {
+      (handler) => async (request: ServerRequest<L>, defer: Deferer) => {
         request.params = new Map();
         request.route = null;
 

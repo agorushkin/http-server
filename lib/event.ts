@@ -5,6 +5,8 @@ type ServerResponseBody =
   | FormData
   | ReadableStream<Uint8Array>;
 
+export type Locals = Record<string | number | symbol, unknown>;
+
 /** The response data that can be sent in response. */
 export type ServerResponse = {
   body?: ServerResponseBody;
@@ -13,7 +15,7 @@ export type ServerResponse = {
 };
 
 /** The request class that is passed to handlers. */
-export class ServerRequest {
+export class ServerRequest<L extends Locals> {
   #request: Request;
   #respond: (response: Response) => void;
 
@@ -41,6 +43,8 @@ export class ServerRequest {
   upgradable = false;
   /** Has the request been upgraded yet. */
   upgraded = false;
+  /** Local context that can be used accross handlers. */
+  locals: Partial<L> = {};
 
   /** Consumes the request body and attempts to parse it to JSON. */
   json: <T = unknown>() => Promise<T>;

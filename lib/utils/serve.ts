@@ -1,4 +1,7 @@
-import { file, Handler } from '../../mod.ts';
+import type { Locals } from '../event.ts';
+import type { Handler } from '../router.ts';
+
+import { file } from './file.ts';
 
 type StaticRules = {
   default?: {
@@ -25,7 +28,10 @@ type StaticRules = {
  * server.get('/public', serve('./assets/'));
  * ```
  */
-export const serve = (root: string, rules: StaticRules = {}): Handler => {
+export const serve = <L extends Locals>(
+  root: string,
+  rules: StaticRules = {},
+): Handler<L> => {
   rules.default ??= {};
   rules.default['access-control-allow-origin'] ??= '*';
   rules.default['cache-control'] ??= 'max-age=0';
