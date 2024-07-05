@@ -61,8 +61,9 @@ export class Server<L extends Locals = Locals> extends ServerRouter<L> {
 
         const defer = async () => {
           const handler = handlers.shift();
+
           if (!handler) return;
-          return void await handler(request, defer);
+          if (!await handler(request, defer)) await defer();
         };
 
         while (handlers.length) await defer();
@@ -100,6 +101,7 @@ export class Server<L extends Locals = Locals> extends ServerRouter<L> {
         request.route = null;
 
         await handler(request, defer);
+        return true;
       },
     );
 

@@ -5,7 +5,7 @@ export type Deferer = () => Promise<void>;
 export type Handler<L extends Locals = Locals> = (
   request: ServerRequest<L>,
   defer: Deferer,
-) => void | Promise<void>;
+) => unknown;
 
 /** The routing agent that can be used to create routes for the server.
  *
@@ -29,7 +29,7 @@ export class ServerRouter<L extends Locals> {
    * @param base The base path for the router.
    * @param list The list of handlers to use, as well as location to store.
    */
-  constructor(base: string, list?: Handler<L>[]) {
+  constructor(base = '', list?: Handler<L>[]) {
     this.handlers = list ?? [];
     this.base = base;
   }
@@ -61,7 +61,7 @@ export class ServerRouter<L extends Locals> {
         const isPatternPassed = pattern.test(request.href);
         const isMethodPassed = method == request.method || method == 'ANY';
 
-        if (!isPatternPassed || !isMethodPassed) return;
+        if (!isPatternPassed || !isMethodPassed) return false;
 
         const params = new Map<string, string | undefined>();
         for (const key in match) params.set(key, match[key]);
@@ -70,6 +70,7 @@ export class ServerRouter<L extends Locals> {
         request.route = `${this.base}${route}`;
 
         await handler(request, defer);
+        return true;
       },
     );
 
