@@ -30,17 +30,6 @@ export class Server<L extends Locals = Locals> extends ServerRouter<L> {
     super('', []);
   }
 
-  #process = async (request: ServerRequest<L>) => {
-    const run = async (index: number) => {
-      if (index >= this.handlers.length) return;
-
-      const handler = this.handlers[index];
-      await handler(request, () => run(index + 1));
-    };
-
-    await run(0);
-  };
-
   /**
    * Initialize the server.
    *
@@ -68,7 +57,15 @@ export class Server<L extends Locals = Locals> extends ServerRouter<L> {
         const response = new Promise((resolve) => respond = resolve);
         const request = new ServerRequest<L>(raw, addr, respond!);
 
-        await this.#process(request);
+        const handlers = [...this.handlers];
+
+        const defer = async () => {
+          const handler = handlers.shift();
+          if (!handler) return;
+          return void await handler(request, defer);
+        };
+
+        while (handlers.length) await defer();
         if (!request.responded) request.respond(request.response);
 
         return await response as Promise<Response>;
