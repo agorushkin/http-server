@@ -2,7 +2,7 @@ import type { Locals, ServerRequest } from './event.ts';
 
 export type Deferer = () => Promise<void>;
 
-export type Handler<L extends Locals> = (
+export type Handler<L extends Locals = Locals> = (
   request: ServerRequest<L>,
   defer: Deferer,
 ) => void | Promise<void>;
