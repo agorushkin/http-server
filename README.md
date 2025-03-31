@@ -5,4 +5,4 @@
 
 ## 📖 Documentation coming soon
 
-Made with ❤️ by (agorushkin)[https://github.com/agorushkin]
+Made with ❤️ by [agorushkin](https://github.com/agorushkin)
