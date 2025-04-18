@@ -37,15 +37,14 @@ export const serve = <L extends Locals>(
   rules.default['cache-control'] ??= 'max-age=0';
   rules.paths ??= {};
 
-  root = root?.[0] === '/' ? root : `${Deno.cwd()}/${root}`;
+  const delimiter = Deno.build.os === 'windows' ? '\\' : '/';
 
   return async ({ href, respond, route }) => {
     const pattern = new URLPattern({ pathname: route ?? '/*' });
     if (!pattern.test(href)) return;
 
-    const path =
-      pattern.exec(href)?.pathname.groups?.['0']?.replace(/\/+/g, '/') ?? '/';
-    const response = await file(`${root}/${path}`);
+    const path = pattern.exec(href)?.pathname.groups?.['0'];
+    const response = await file(`${root}${delimiter}${path}`);
 
     if (response.status === 404) return respond(response);
 

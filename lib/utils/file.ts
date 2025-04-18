@@ -20,7 +20,9 @@ import { extension, ServerResponse } from '../../mod.ts';
 export const file = async (
   path: string,
 ): Promise<Omit<ServerResponse, 'headers'> & { headers?: Headers }> => {
-  path = path?.[0] === '/' ? path : `${Deno.cwd()}/${path}`;
+  const delimiter = Deno.build.os === 'windows' ? '\\' : '/';
+  path = path.replace(/(\/|\\)+/g, delimiter);
+  path = `${Deno.cwd()}${delimiter}${path}`;
 
   const file = await fetch(`file://${path}`).then((file) => file.body).catch(
     () => null,
